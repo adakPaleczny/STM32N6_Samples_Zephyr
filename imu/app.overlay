@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ */
+
+/ {
+	chosen {
+		zephyr,camera_aux = &pipe_aux;
+	};
+};
+
+// Turn on so called npu rams. They will used by NPU for model actvation buffers
+&axisram3 {
+	status = "okay";
+};
+&axisram4 {
+	status = "okay";
+};
+&axisram5 {
+	status = "okay";
+};
+&axisram6 {
+	status = "okay";
+};
+
+&csi_i2c {
+	status = "okay";
+};
+
+// Turn on npu
+&npu {
+	status = "okay";
+};
+
+// Temporary patch that allows to turn on cache on psram
+// Remove this when merge upstream
+&psram {
+	/* Prevent access to the last 32bytes of the memory-mapped device */
+	reg = <0x90000000 (DT_SIZE_M(32) - 32)>;
+	zephyr,memory-attr = <DT_MEM_ARM(ATTR_MPU_RAM)>;
+};

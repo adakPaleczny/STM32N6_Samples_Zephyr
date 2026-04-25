@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.20.0)
+
+set(BOARD stm32n6570_dk)
+set(SHIELD st_b_cams_imx_mb1854)
+
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
+project(app LANGUAGES C)
+
+target_include_directories(app PRIVATE src/ism330dlc)
+target_sources(app PRIVATE src/main.c src/ism330dlc/ism330dlc.c src/ism330dlc/ism330dlc_reg.c)
