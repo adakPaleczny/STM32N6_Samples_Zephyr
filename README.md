@@ -1,0 +1,1 @@
+# STM32N6_Samples_Zephyr
