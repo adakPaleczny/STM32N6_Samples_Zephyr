@@ -2511,6 +2511,7 @@ int32_t ISM330DLC_FIFO_Set_INT2_FIFO_Full(ISM330DLC_Object_t *pObj, uint8_t Stat
   }
 
   reg.int1_ctrl.int1_full_flag = Status;
+  reg.int2_ctrl.int2_full_flag = Status;
 
   if (ism330dlc_write_reg(&(pObj->Ctx), ISM330DLC_INT2_CTRL, &reg.byte, 1) != ISM330DLC_OK)
   {
