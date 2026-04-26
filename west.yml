@@ -1,0 +1,21 @@
+# Copyright (c) 2025 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  version: 1.0
+
+  self:
+    path: zephyr-samples-imu
+
+  projects:
+    - name: zephyr
+      url: https://github.com/zephyrproject-rtos/zephyr.git
+      revision: v4.3.0
+      west-commands: scripts/west-commands.yml
+      import:
+        name-allowlist:
+          - cmsis_6
+          - cmsis-dsp
+          - hal_stm32
+          - mcuboot
+          - mbedtls

@@ -1,0 +1,55 @@
+# Copyright (c) 2025 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  STMicroelectronics ISM330DLC 6-axis IMU (3-axis accelerometer + 3-axis
+  gyroscope) on I2C bus.
+
+  Example overlay usage:
+
+    &i2c1 {
+        ism330dlc: ism330dlc@6a {
+            compatible = "st,ism330dlc";
+            reg = <0x6a>;
+
+            accel-odr   = <104>;
+            accel-range = <2>;
+            gyro-odr    = <104>;
+            gyro-range  = <2000>;
+        };
+    };
+
+  I2C address is 0x6a (SA0=GND) or 0x6b (SA0=VCC).
+
+compatible: "st,ism330dlc"
+
+include: i2c-device.yaml
+
+properties:
+  accel-odr:
+    type: int
+    default: 104
+    description: |
+      Accelerometer output data rate in Hz.
+      Valid values: 12, 26, 52, 104, 208, 416, 833, 1660, 3330, 6660.
+
+  accel-range:
+    type: int
+    default: 2
+    description: |
+      Accelerometer full-scale range in g.
+      Valid values: 2, 4, 8, 16.
+
+  gyro-odr:
+    type: int
+    default: 104
+    description: |
+      Gyroscope output data rate in Hz.
+      Valid values: 12, 26, 52, 104, 208, 416, 833, 1660, 3330, 6660.
+
+  gyro-range:
+    type: int
+    default: 2000
+    description: |
+      Gyroscope full-scale range in dps.
+      Valid values: 125, 250, 500, 1000, 2000.

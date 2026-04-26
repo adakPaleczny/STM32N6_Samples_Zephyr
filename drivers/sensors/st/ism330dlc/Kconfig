@@ -1,0 +1,13 @@
+# ST Microelectronics ISM330DLC 6-axis IMU sensor driver
+
+# Copyright (c) 2020 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig ISM330DLC
+	bool "ISM330DLC I2C/SPI accelerometer and gyroscope Chip"
+	default y
+	depends on DT_HAS_ST_ISM330DLC_ENABLED
+	select I2C if $(dt_compat_on_bus,$(DT_COMPAT_ST_ISM330DLC),i2c)
+	help
+	  Enable driver for ISM330DLC accelerometer and gyroscope
+	  sensor.

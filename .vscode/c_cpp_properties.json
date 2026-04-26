@@ -1,0 +1,12 @@
+{
+  "configurations": [
+    {
+      "name": "Zephyr_IMU",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+      "intelliSenseMode": "linux-gcc-x64",  // adjust for your platform
+      "cppStandard": "c++17",
+      "cStandard": "c11"
+    }
+  ],
+  "version": 4
+}
