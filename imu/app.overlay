@@ -29,6 +29,16 @@
 
 &csi_i2c {
 	status = "okay";
+
+	ism330dlc: ism330dlc@6a {
+		compatible = "st,ism330dlc";
+		reg = <0x6a>;        /* SA0=GND → 7-bit address 0x6a; use 0x6b if SA0=VCC */
+
+		accel-odr   = <104>;
+		accel-range = <2>;
+		gyro-odr    = <104>;
+		gyro-range  = <2000>;
+	};
 };
 
 // Turn on npu

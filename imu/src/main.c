@@ -4,23 +4,14 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/device.h>
-
-#include <stdarg.h>
-
-#include "zephyr/drivers/gpio.h"
-#include "zephyr/drivers/i2c.h"
-
-#include "ism330dlc/ism330dlc.h"
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/sensor.h>
 
 LOG_MODULE_REGISTER(imu);
 
 #define LED0_NODE DT_ALIAS(led0)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
-static const struct device *i2c_dev = DEVICE_DT_GET(DT_NODELABEL(csi_i2c));
-static ISM330DLC_Object_t imu_obj;
-
-#define IMU_I2C_ADDR_LOW   (ISM330DLC_I2C_ADD_L >> 1)
-#define IMU_I2C_ADDR_HIGH  (ISM330DLC_I2C_ADD_H >> 1)
+static const struct device *imu_dev = DEVICE_DT_GET(DT_NODELABEL(ism330dlc));
 
 #define LED_STACK_SIZE 1024
 #define IMU_STACK_SIZE 2048
@@ -30,19 +21,9 @@ K_THREAD_STACK_DEFINE(imu_stack, IMU_STACK_SIZE);
 
 static struct k_thread led_thread, imu_thread;
 
-
 void led_thread_func(void *p1, void *p2, void *p3);
 void imu_thread_func(void *p1, void *p2, void *p3);
 static void hearbeat_init(void);
-static int32_t imu_i2c_platform_init(void);
-static int32_t imu_i2c_platform_deinit(void);
-static int32_t imu_i2c_platform_get_tick(void);
-static int32_t imu_i2c_platform_write(uint16_t addr, uint16_t reg, uint8_t *data, uint16_t len);
-static int32_t imu_i2c_platform_read(uint16_t addr, uint16_t reg, uint8_t *data, uint16_t len);
-static int32_t imu_try_init_at_address(uint8_t addr);
-static int32_t imu_i2c_driver_init(void);
-static int32_t imu_enable_sensors(void);
-static int32_t imu_read_axes(ISM330DLC_Axes_t *acc, ISM330DLC_Axes_t *gyro);
 
 
 int main(){
@@ -86,129 +67,32 @@ static void hearbeat_init(void)
     gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
 }
 
-static int32_t imu_i2c_platform_init(void)
-{
-    return device_is_ready(i2c_dev) ? ISM330DLC_OK : ISM330DLC_ERROR;
-}
-
-static int32_t imu_i2c_platform_deinit(void)
-{
-    return ISM330DLC_OK;
-}
-
-static int32_t imu_i2c_platform_get_tick(void)
-{
-    return (int32_t)k_uptime_get_32();
-}
-
-static int32_t imu_i2c_platform_write(uint16_t addr, uint16_t reg, uint8_t *data, uint16_t len)
-{
-    int ret = i2c_burst_write(i2c_dev, (uint16_t)(addr & 0x7F), (uint8_t)reg, data, len);
-
-    return (ret == 0) ? ISM330DLC_OK : ISM330DLC_ERROR;
-}
-
-static int32_t imu_i2c_platform_read(uint16_t addr, uint16_t reg, uint8_t *data, uint16_t len)
-{
-    int ret = i2c_burst_read(i2c_dev, (uint16_t)(addr & 0x7F), (uint8_t)reg, data, len);
-
-    return (ret == 0) ? ISM330DLC_OK : ISM330DLC_ERROR;
-}
-
-static int32_t imu_try_init_at_address(uint8_t addr)
-{
-    ISM330DLC_IO_t io_ctx = {
-        .Init = imu_i2c_platform_init,
-        .DeInit = imu_i2c_platform_deinit,
-        .BusType = ISM330DLC_I2C_BUS,
-        .Address = addr,
-        .WriteReg = imu_i2c_platform_write,
-        .ReadReg = imu_i2c_platform_read,
-        .GetTick = imu_i2c_platform_get_tick,
-    };
-    uint8_t who_am_i = 0;
-
-    if (ISM330DLC_RegisterBusIO(&imu_obj, &io_ctx) != ISM330DLC_OK) {
-        return ISM330DLC_ERROR;
-    }
-
-    if (ISM330DLC_ReadID(&imu_obj, &who_am_i) != ISM330DLC_OK || who_am_i != ISM330DLC_ID) {
-        return ISM330DLC_ERROR;
-    }
-
-    if (ISM330DLC_Init(&imu_obj) != ISM330DLC_OK) {
-        return ISM330DLC_ERROR;
-    }
-
-    return ISM330DLC_OK;
-}
-
-static int32_t imu_i2c_driver_init(void)
-{
-    if (imu_try_init_at_address(IMU_I2C_ADDR_LOW) == ISM330DLC_OK) {
-        LOG_INF("ISM330DLC initialized on 0x%02x", IMU_I2C_ADDR_LOW);
-        return ISM330DLC_OK;
-    }
-
-    if (imu_try_init_at_address(IMU_I2C_ADDR_HIGH) == ISM330DLC_OK) {
-        LOG_INF("ISM330DLC initialized on 0x%02x", IMU_I2C_ADDR_HIGH);
-        return ISM330DLC_OK;
-    }
-
-    LOG_ERR("ISM330DLC initialization failed on 0x%02x and 0x%02x",
-        IMU_I2C_ADDR_LOW, IMU_I2C_ADDR_HIGH);
-
-    return ISM330DLC_ERROR;
-}
-
-static int32_t imu_enable_sensors(void)
-{
-    if (ISM330DLC_ACC_Enable(&imu_obj) != ISM330DLC_OK) {
-        LOG_ERR("Failed to enable accelerometer");
-        return ISM330DLC_ERROR;
-    }
-
-    if (ISM330DLC_GYRO_Enable(&imu_obj) != ISM330DLC_OK) {
-        LOG_ERR("Failed to enable gyroscope");
-        return ISM330DLC_ERROR;
-    }
-
-    return ISM330DLC_OK;
-}
-
-static int32_t imu_read_axes(ISM330DLC_Axes_t *acc, ISM330DLC_Axes_t *gyro)
-{
-    if (ISM330DLC_ACC_GetAxes(&imu_obj, acc) != ISM330DLC_OK) {
-        return ISM330DLC_ERROR;
-    }
-
-    if (ISM330DLC_GYRO_GetAxes(&imu_obj, gyro) != ISM330DLC_OK) {
-        return ISM330DLC_ERROR;
-    }
-
-    return ISM330DLC_OK;
-}
-
 void imu_thread_func(void *p1, void *p2, void *p3)
 {
-    ISM330DLC_Axes_t acc;
-    ISM330DLC_Axes_t gyro;
+    struct sensor_value acc[3];
+    struct sensor_value gyro[3];
 
-    if (imu_i2c_driver_init() != ISM330DLC_OK) {
-        return;
-    }
-
-    if (imu_enable_sensors() != ISM330DLC_OK) {
+    if (!device_is_ready(imu_dev)) {
+        LOG_ERR("ISM330DLC device not ready");
         return;
     }
 
     while (1) {
-        if (imu_read_axes(&acc, &gyro) == ISM330DLC_OK) {
-            LOG_INF("ACC[mg] x=%ld y=%ld z=%ld | GYRO[mdps] x=%ld y=%ld z=%ld",
-                (long)acc.x, (long)acc.y, (long)acc.z,
-                (long)gyro.x, (long)gyro.y, (long)gyro.z);
+        if (sensor_sample_fetch(imu_dev) == 0) {
+            sensor_channel_get(imu_dev, SENSOR_CHAN_ACCEL_XYZ, acc);
+            sensor_channel_get(imu_dev, SENSOR_CHAN_GYRO_XYZ, gyro);
+
+            LOG_INF("ACC [m/s²]  x=%d.%06d  y=%d.%06d  z=%d.%06d",
+                acc[0].val1, abs(acc[0].val2),
+                acc[1].val1, abs(acc[1].val2),
+                acc[2].val1, abs(acc[2].val2));
+
+            LOG_INF("GYRO[rad/s] x=%d.%06d  y=%d.%06d  z=%d.%06d",
+                gyro[0].val1, abs(gyro[0].val2),
+                gyro[1].val1, abs(gyro[1].val2),
+                gyro[2].val1, abs(gyro[2].val2));
         } else {
-            LOG_ERR("Failed to read IMU axes");
+            LOG_ERR("sensor_sample_fetch failed");
         }
 
         k_msleep(200);

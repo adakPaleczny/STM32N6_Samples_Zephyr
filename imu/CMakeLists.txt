@@ -7,5 +7,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(app LANGUAGES C)
 
-target_include_directories(app PRIVATE src/ism330dlc)
-target_sources(app PRIVATE src/main.c src/ism330dlc/ism330dlc.c src/ism330dlc/ism330dlc_reg.c)
+target_sources(app PRIVATE src/main.c)
