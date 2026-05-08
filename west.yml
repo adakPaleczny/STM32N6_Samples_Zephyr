@@ -20,3 +20,4 @@ manifest:
           - mcuboot
           - mbedtls
           - lvgl
+          - fatfs

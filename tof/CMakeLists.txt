@@ -10,4 +10,5 @@ project(app LANGUAGES C)
 target_sources(app PRIVATE
     src/main.c
     src/tof_display.c
+    src/sd_logger.c
 )

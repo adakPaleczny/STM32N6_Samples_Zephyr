@@ -26,25 +26,27 @@
 #define DISP_W      800
 #define DISP_H      480
 #define HEADER_H     48
+#define FOOTER_H     32
 #define GRID_PAD     12
 #define CELL_GAP      6
 #define COLS          8
 #define ROWS          8
 
 /*
- * Total grid area after subtracting header and outer padding.
+ * Total grid area after subtracting header, footer, and outer padding.
  * Cell sizes are derived so the grid exactly fills the remaining space.
  */
 #define GRID_W   (DISP_W - 2 * GRID_PAD)
-#define GRID_H   (DISP_H - HEADER_H - 2 * GRID_PAD)
-#define CELL_W   ((GRID_W - (COLS - 1) * CELL_GAP) / COLS)   /* ≈ 185 px */
-#define CELL_H   ((GRID_H - (ROWS - 1) * CELL_GAP) / ROWS)   /* ≈ 97  px */
+#define GRID_H   (DISP_H - HEADER_H - FOOTER_H - 2 * GRID_PAD)
+#define CELL_W   ((GRID_W - (COLS - 1) * CELL_GAP) / COLS)
+#define CELL_H   ((GRID_H - (ROWS - 1) * CELL_GAP) / ROWS)
 
 /* ── Module state ────────────────────────────────────────────────────────── */
 
 static lv_obj_t *cells[ROWS][COLS];
 static lv_obj_t *dist_labels[ROWS][COLS];
 static lv_obj_t *title_label;
+static lv_obj_t *status_label;
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -117,6 +119,13 @@ int tof_display_init(const struct device *disp_dev)
         }
     }
 
+    /* Footer status bar */
+    status_label = lv_label_create(scr);
+    lv_label_set_text(status_label, "Press SW0 to save snapshot to SD card");
+    lv_obj_set_style_text_color(status_label, lv_color_hex(0x80a0b0), LV_PART_MAIN);
+    lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
+    lv_obj_align(status_label, LV_ALIGN_BOTTOM_MID, 0, -8);
+
     lv_timer_handler();
     return 0;
 }
@@ -141,5 +150,12 @@ void tof_display_update(const uint32_t dist_mm[TOF_GRID_ZONES],
             snprintf(buf, sizeof(buf), "---");
         }
         lv_label_set_text(dist_labels[r][c], buf);
+    }
+}
+
+void tof_display_set_status(const char *msg)
+{
+    if (status_label) {
+        lv_label_set_text(status_label, msg);
     }
 }
