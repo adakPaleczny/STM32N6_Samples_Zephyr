@@ -2,3 +2,4 @@
 # SPDX-License-Identifier: Apache-2.0
 
 add_subdirectory_ifdef(CONFIG_ISM330DLC ism330dlc)
+add_subdirectory_ifdef(CONFIG_VL53L5CX  vl53l5cx)

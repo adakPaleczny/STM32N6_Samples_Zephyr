@@ -1,1 +1,2 @@
 rsource "ism330dlc/Kconfig"
+rsource "vl53l5cx/Kconfig"

@@ -1,0 +1,12 @@
+# ST Microelectronics VL53L5CX multi-zone ToF sensor driver
+#
+# Copyright (c) 2025 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig VL53L5CX
+	bool "VL53L5CX multi-zone Time-of-Flight ranging sensor"
+	default y
+	depends on DT_HAS_ST_VL53L5CX_ENABLED
+	select I2C if $(dt_compat_on_bus,$(DT_COMPAT_ST_VL53L5CX),i2c)
+	help
+	  Enable driver for the VL53L5CX 4x4 / 8x8 zone ToF ranging sensor.

@@ -1,0 +1,48 @@
+# Copyright (c) 2025 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  STMicroelectronics VL53L5CX multi-zone Time-of-Flight ranging sensor
+  on I2C bus (4×4 or 8×8 zone grid, distance in mm).
+
+  Example overlay usage:
+
+    &i2c1 {
+        vl53l5cx: vl53l5cx@29 {
+            compatible = "st,vl53l5cx";
+            reg = <0x29>;          /* default 7-bit address; can be changed */
+
+            ranging-profile = <1>; /* 1=4x4 continuous, 3=8x8 continuous   */
+            timing-budget   = <30>;
+            frequency       = <5>;
+        };
+    };
+
+compatible: "st,vl53l5cx"
+
+include: i2c-device.yaml
+
+properties:
+  ranging-profile:
+    type: int
+    default: 1
+    description: |
+      Ranging profile selection:
+        1 = VL53L5CX_PROFILE_4x4_CONTINUOUS
+        2 = VL53L5CX_PROFILE_4x4_AUTONOMOUS
+        3 = VL53L5CX_PROFILE_8x8_CONTINUOUS
+        4 = VL53L5CX_PROFILE_8x8_AUTONOMOUS
+
+  timing-budget:
+    type: int
+    default: 30
+    description: |
+      Per-measurement timing budget in milliseconds.
+      Valid range: 2–1000 ms (sensor-dependent).
+
+  frequency:
+    type: int
+    default: 5
+    description: |
+      Target ranging frequency in Hz.
+      Valid range: 1–60 Hz (sensor-dependent).
