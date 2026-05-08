@@ -161,23 +161,45 @@ static int vl53l5cx_channel_get(const struct device *dev,
 {
 	const struct vl53l5cx_data *data = dev->data;
 
-	if (chan != SENSOR_CHAN_DISTANCE) {
-		return -ENOTSUP;
+	if (chan == SENSOR_CHAN_DISTANCE) {
+		if (data->result.NumberOfZones == 0U) {
+			return -ENODATA;
+		}
+		if (data->result.ZoneResult[0].Status[0] != 0U) {
+			LOG_WRN("Zone 0 status NOK: %u",
+				data->result.ZoneResult[0].Status[0]);
+		}
+		mm_to_sensor_value(data->result.ZoneResult[0].Distance[0], val);
+		return 0;
 	}
 
-	if (data->result.NumberOfZones == 0U) {
-		return -ENODATA;
+	/*
+	 * Private zone channels: SENSOR_CHAN_PRIV_START + zone_index
+	 * val1 = distance in mm (0 if no target)
+	 * val2 = target status  (0 = valid, non-zero = invalid)
+	 */
+	if (chan >= SENSOR_CHAN_PRIV_START &&
+	    (int)chan < (int)SENSOR_CHAN_PRIV_START + VL53L5CX_RESOLUTION_8X8) {
+		int zone = (int)chan - (int)SENSOR_CHAN_PRIV_START;
+
+		if (data->result.NumberOfZones == 0U ||
+		    zone >= (int)data->result.NumberOfZones) {
+			val->val1 = 0;
+			val->val2 = 1;
+			return 0;
+		}
+
+		if (data->result.ZoneResult[zone].NumberOfTargets > 0U) {
+			val->val1 = (int32_t)data->result.ZoneResult[zone].Distance[0];
+			val->val2 = (int32_t)data->result.ZoneResult[zone].Status[0];
+		} else {
+			val->val1 = 0;
+			val->val2 = 1;
+		}
+		return 0;
 	}
 
-	/* Expose zone 0, target 0. Status 0 means valid measurement. */
-	if (data->result.ZoneResult[0].Status[0] != 0U) {
-		LOG_WRN("Zone 0 status NOK: %u",
-			data->result.ZoneResult[0].Status[0]);
-	}
-
-	mm_to_sensor_value(data->result.ZoneResult[0].Distance[0], val);
-
-	return 0;
+	return -ENOTSUP;
 }
 
 /* ── Driver init ─────────────────────────────────────────────────────────── */
