@@ -28,8 +28,8 @@
 #define HEADER_H     48
 #define GRID_PAD     12
 #define CELL_GAP      6
-#define COLS          4
-#define ROWS          4
+#define COLS          8
+#define ROWS          8
 
 /*
  * Total grid area after subtracting header and outer padding.
@@ -80,7 +80,7 @@ int tof_display_init(const struct device *disp_dev)
 
     /* Title */
     title_label = lv_label_create(scr);
-    lv_label_set_text(title_label, "VL53L5CX  4x4  Distance  Map");
+    lv_label_set_text(title_label, "VL53L5CX  8x8  Distance  Map  (mm)");
     lv_obj_set_style_text_color(title_label, lv_color_hex(0xc0d0e0), LV_PART_MAIN);
     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 14);
@@ -105,16 +105,6 @@ int tof_display_init(const struct device *disp_dev)
             lv_obj_set_style_pad_all(cell, 0, LV_PART_MAIN);
             lv_obj_clear_flag(cell, LV_OBJ_FLAG_SCROLLABLE);
             cells[r][c] = cell;
-
-            /* Small zone-index label (top-left corner) */
-            lv_obj_t *zlbl = lv_label_create(cell);
-            char zbuf[4];
-
-            snprintf(zbuf, sizeof(zbuf), "%d", r * COLS + c);
-            lv_label_set_text(zlbl, zbuf);
-            lv_obj_set_style_text_color(zlbl, lv_color_hex(0xffffff), LV_PART_MAIN);
-            lv_obj_set_style_text_opa(zlbl, 140, LV_PART_MAIN);
-            lv_obj_align(zlbl, LV_ALIGN_TOP_LEFT, 6, 4);
 
             /* Distance label (centered) */
             lv_obj_t *dlbl = lv_label_create(cell);
@@ -146,7 +136,7 @@ void tof_display_update(const uint32_t dist_mm[TOF_GRID_ZONES],
                                    LV_PART_MAIN);
 
         if (valid) {
-            snprintf(buf, sizeof(buf), "%u mm", (unsigned)dist_mm[i]);
+            snprintf(buf, sizeof(buf), "%u", (unsigned)dist_mm[i]);
         } else {
             snprintf(buf, sizeof(buf), "---");
         }

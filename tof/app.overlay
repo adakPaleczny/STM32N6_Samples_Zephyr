@@ -34,7 +34,7 @@
 		compatible = "st,vl53l5cx";
 		reg = <0x29>;          /* default 7-bit address (8-bit: 0x52) */
 
-		ranging-profile = <1>; /* VL53L5CX_PROFILE_4x4_CONTINUOUS     */
+		ranging-profile = <3>; /* VL53L5CX_PROFILE_8x8_CONTINUOUS     */
 		timing-budget   = <30>;
 		frequency       = <5>;
 	};
