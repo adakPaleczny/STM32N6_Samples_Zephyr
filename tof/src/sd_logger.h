@@ -11,4 +11,5 @@
  * Returns 0 on success, negative errno on failure.
  */
 int sd_logger_save(const uint32_t dist_mm[TOF_GRID_ZONES],
-                   const uint8_t  statuses[TOF_GRID_ZONES]);
+                   const uint8_t  statuses[TOF_GRID_ZONES],
+                   const char    *label);

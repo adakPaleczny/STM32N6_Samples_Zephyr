@@ -1,0 +1,14 @@
+mainmenu "Zephyr IMU sample application"
+
+menu "Application options"
+config MY_APP
+	bool "Enable app"
+	default y
+	select USE_STM32_HAL_RAMCFG
+	select USE_STM32_HAL_CACHEAXI
+	select FPU
+	help
+		enable application
+endmenu
+
+source "Kconfig.zephyr"

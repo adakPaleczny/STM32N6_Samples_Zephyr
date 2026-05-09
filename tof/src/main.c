@@ -23,9 +23,19 @@ static const struct device       *tof_dev = DEVICE_DT_GET(DT_NODELABEL(vl53l5cx)
 
 static struct gpio_callback btn_cb_data;
 
+/* ── Class labels ────────────────────────────────────────────────────────── */
+
+static const char *const CLASS_NAMES[] = {
+    "OK", "STOP", "THUMB_UP", "VICTORIA", "FUCK", "OTHER"
+};
+#define NUM_CLASSES ((int)ARRAY_SIZE(CLASS_NAMES))
+
+static int g_class_idx;  /* written + read only from display thread */
+
 /* ── Shared ToF data (sensor → display thread) ───────────────────────────── */
 
-static K_SEM_DEFINE(save_sem, 0, 1);
+static K_SEM_DEFINE(save_sem,  0, 1);
+static K_SEM_DEFINE(class_sem, 0, 1);
 static K_MUTEX_DEFINE(g_tof_lock);
 static struct {
     uint32_t dist_mm[TOF_GRID_ZONES];
@@ -33,12 +43,26 @@ static struct {
     bool     fresh;
 } g_tof;
 
-static void btn_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+static uint32_t g_press_time_ms;
+
+static void btn_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
-    ARG_UNUSED(dev);
     ARG_UNUSED(cb);
     ARG_UNUSED(pins);
-    k_sem_give(&save_sem);
+
+    if (gpio_pin_get_dt(&btn) > 0) {
+        /* Rising edge — button pressed */
+        g_press_time_ms = k_uptime_get_32();
+    } else {
+        /* Falling edge — button released */
+        uint32_t dur = k_uptime_get_32() - g_press_time_ms;
+
+        if (dur >= 800U) {
+            k_sem_give(&class_sem);
+        } else {
+            k_sem_give(&save_sem);
+        }
+    }
 }
 
 /* ── Thread stacks ───────────────────────────────────────────────────────── */
@@ -114,7 +138,12 @@ static void display_thread_func(void *p1, void *p2, void *p3)
 
     uint32_t dist_snap[TOF_GRID_ZONES];
     uint8_t  stat_snap[TOF_GRID_ZONES];
-    char     status_buf[64];
+    char     status_buf[80];
+
+    snprintf(status_buf, sizeof(status_buf),
+             "Class: %-8s  |  short=save  long=cycle",
+             CLASS_NAMES[g_class_idx]);
+    tof_display_set_status(status_buf);
 
     while (1) {
         if (k_mutex_lock(&g_tof_lock, K_NO_WAIT) == 0) {
@@ -130,14 +159,26 @@ static void display_thread_func(void *p1, void *p2, void *p3)
             }
         }
 
+        if (k_sem_take(&class_sem, K_NO_WAIT) == 0) {
+            g_class_idx = (g_class_idx + 1) % NUM_CLASSES;
+            snprintf(status_buf, sizeof(status_buf),
+                     "Class: %-8s  |  short=save  long=cycle",
+                     CLASS_NAMES[g_class_idx]);
+            tof_display_set_status(status_buf);
+        }
+
         if (k_sem_take(&save_sem, K_NO_WAIT) == 0) {
-            tof_display_set_status("Saving to SD...");
+            snprintf(status_buf, sizeof(status_buf),
+                     "Saving [%s]...", CLASS_NAMES[g_class_idx]);
+            tof_display_set_status(status_buf);
             lv_timer_handler();
 
-            int rc = sd_logger_save(dist_snap, stat_snap);
+            int rc = sd_logger_save(dist_snap, stat_snap,
+                                    CLASS_NAMES[g_class_idx]);
             if (rc == 0) {
                 snprintf(status_buf, sizeof(status_buf),
-                         "Saved at %u ms  (SW0 to save again)",
+                         "[%s] saved at %u ms",
+                         CLASS_NAMES[g_class_idx],
                          (unsigned)k_uptime_get_32());
             } else {
                 snprintf(status_buf, sizeof(status_buf),
@@ -161,8 +202,8 @@ int main(void)
 
     if (device_is_ready(btn.port)) {
         gpio_pin_configure_dt(&btn, GPIO_INPUT);
-        gpio_pin_interrupt_configure_dt(&btn, GPIO_INT_EDGE_TO_ACTIVE);
-        gpio_init_callback(&btn_cb_data, btn_pressed, BIT(btn.pin));
+        gpio_pin_interrupt_configure_dt(&btn, GPIO_INT_EDGE_BOTH);
+        gpio_init_callback(&btn_cb_data, btn_isr, BIT(btn.pin));
         gpio_add_callback(btn.port, &btn_cb_data);
     } else {
         LOG_WRN("SW0 button not ready");
