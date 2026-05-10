@@ -73,7 +73,8 @@ static void tof_thread_func(void *p1, void *p2, void *p3)
             sensor_channel_get(tof_dev,
                                (enum sensor_channel)(SENSOR_CHAN_PRIV_START + z),
                                &sv);
-            input_signal[z] = (float)sv.val1;
+            bool valid = (sv.val2 == 0) && (sv.val1 > 0);
+            input_signal[z] = valid ? (float)sv.val1 : 2555.0f;
         }
 
         neai_classification(input_signal, probabilities, &id_class);
