@@ -35,7 +35,7 @@
 &spi5 {
 	status = "okay";
 	/* CS GPIO for rc522@0 (index = reg value = 0) */
-	cs-gpios = <&gpioa 15 GPIO_ACTIVE_LOW>;
+	cs-gpios = <&gpioa 3 GPIO_ACTIVE_LOW>;
 
 	rc522: rc522@0 {
 		compatible = "nxp,rc522";

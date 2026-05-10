@@ -327,9 +327,14 @@ static int rc522_init(const struct device *dev)
 
 	uint8_t ver = reg_read(dev, REG_VERSION);
 
-	LOG_INF("RC522 chip version 0x%02x", ver);
+	LOG_INF("RC522 VersionReg = 0x%02x", ver);
+
+	if (ver == 0x00 || ver == 0xFF) {
+		LOG_ERR("No SPI response (0x%02x) — check MOSI/MISO/SCK/CS wiring and 3.3 V supply", ver);
+		return -ENODEV;
+	}
 	if (ver != 0x91 && ver != 0x92) {
-		LOG_WRN("unexpected version — wiring or CS issue?");
+		LOG_WRN("Unexpected version 0x%02x (known good: 0x91 / 0x92) — may be a clone, continuing", ver);
 	}
 
 	/*
