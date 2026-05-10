@@ -6,6 +6,13 @@
       "intelliSenseMode": "linux-gcc-x64",  // adjust for your platform
       "cppStandard": "c++17",
       "cStandard": "c11"
+    },
+    {
+      "name": "rfid",
+      "compileCommands": "${workspaceFolder}/rfid_rc522/build/compile_commands.json",
+      "intelliSenseMode": "linux-gcc-x64",  // adjust for your platform
+      "cppStandard": "c++17",
+      "cStandard": "c11"
     }
   ],
   "version": 4
