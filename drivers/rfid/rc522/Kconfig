@@ -1,0 +1,24 @@
+# NXP MFRC522 RFID reader driver
+# Copyright (c) 2025
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig RC522
+	bool "NXP MFRC522 RFID reader driver"
+	default y
+	depends on DT_HAS_NXP_RC522_ENABLED
+	select SPI
+	help
+	  Enable driver for the NXP MFRC522 RFID/NFC reader chip.
+	  Uses SPI to communicate with the chip and exposes a simple
+	  API for card detection and UID reading.
+
+if RC522
+
+config RC522_LOG_LEVEL
+	int "RC522 driver log level"
+	default 3
+	range 0 4
+	help
+	  Log level for the RC522 driver (0=off, 1=ERR, 2=WRN, 3=INF, 4=DBG).
+
+endif # RC522

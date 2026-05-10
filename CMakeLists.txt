@@ -4,4 +4,8 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
-add_subdirectory_ifdef(CONFIG_SENSOR drivers)
+zephyr_include_directories(include)
+
+if(CONFIG_SENSOR OR CONFIG_RC522)
+  add_subdirectory(drivers)
+endif()
