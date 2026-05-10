@@ -79,8 +79,7 @@ int sd_logger_save(const uint32_t dist_mm[TOF_GRID_ZONES],
     if (!file_exists) {
         len = snprintf(line, sizeof(line), "timestamp_ms;label");
         for (int z = 0; z < TOF_GRID_ZONES; z++) {
-            len += snprintf(line + len, sizeof(line) - len,
-                            ";z%d_mm;z%d_status", z, z);
+            len += snprintf(line + len, sizeof(line) - len, ";z%d_mm", z);
         }
         len += snprintf(line + len, sizeof(line) - len, "\n");
         fs_write(&f, line, len);
@@ -89,10 +88,9 @@ int sd_logger_save(const uint32_t dist_mm[TOF_GRID_ZONES],
     len = snprintf(line, sizeof(line), "%u;%s",
                    (unsigned)k_uptime_get_32(), label ? label : "OTHER");
     for (int z = 0; z < TOF_GRID_ZONES; z++) {
-        len += snprintf(line + len, sizeof(line) - len,
-                        ";%u;%u",
-                        (unsigned)dist_mm[z],
-                        (unsigned)statuses[z]);
+        bool valid = (statuses[z] == 0U) && (dist_mm[z] > 0U);
+        uint32_t val = valid ? dist_mm[z] : 2555U;
+        len += snprintf(line + len, sizeof(line) - len, ";%u", (unsigned)val);
     }
     len += snprintf(line + len, sizeof(line) - len, "\n");
 

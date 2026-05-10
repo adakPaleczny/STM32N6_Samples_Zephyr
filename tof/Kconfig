@@ -7,6 +7,7 @@ config MY_APP
 	select USE_STM32_HAL_RAMCFG
 	select USE_STM32_HAL_CACHEAXI
 	select FPU
+	select CMSIS_DSP
 	help
 		enable application
 endmenu

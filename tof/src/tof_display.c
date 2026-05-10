@@ -147,7 +147,7 @@ void tof_display_update(const uint32_t dist_mm[TOF_GRID_ZONES],
         if (valid) {
             snprintf(buf, sizeof(buf), "%u", (unsigned)dist_mm[i]);
         } else {
-            snprintf(buf, sizeof(buf), "---");
+            snprintf(buf, sizeof(buf), "2500");
         }
         lv_label_set_text(dist_labels[r][c], buf);
     }

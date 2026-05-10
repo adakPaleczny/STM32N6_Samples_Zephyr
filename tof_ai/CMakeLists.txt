@@ -10,7 +10,6 @@ project(app LANGUAGES C)
 target_sources(app PRIVATE
     src/main.c
     src/tof_display.c
-    # src/neai_shim.c
 )
 
 target_link_libraries(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/libneai.a)
